@@ -1,14 +1,14 @@
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta'
 
 export const MODELS = [
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3.1-pro-preview',
+  'gemini-3.1-flash-lite',
   'gemini-2.5-flash',
   'gemini-2.5-pro',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
+  'gemini-2.5-flash-lite',
 ]
-export const EMBED_MODELS = ['text-embedding-004', 'gemini-embedding-001']
+export const EMBED_MODELS = ['gemini-embedding-001']
 
 export const DEFAULT_MODEL = MODELS[0]
 export const DEFAULT_EMBED_MODEL = EMBED_MODELS[0]
