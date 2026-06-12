@@ -5,24 +5,33 @@ import RequestPanel from './components/RequestPanel'
 import ResponsePanel from './components/ResponsePanel'
 import {
   ENDPOINTS,
-  DEFAULT_MODEL,
+  PROVIDERS,
   sendRequest,
   sendStreamingRequest,
   extractText,
-} from './lib/gemini'
+} from './lib/providers'
 import './App.css'
+import { disableAutoTracking, enableAutoTracking } from 'tokentab/auto'
 
-const STORAGE_KEY = 'gemini-portal-api-key'
+// Importing tokentab/auto patches fetch with the built-in hosts (OpenAI,
+// Anthropic, Gemini). Re-enable with Groq's host mapped to the bundled
+// OpenAI-compatible adapter so Groq calls are tracked too.
+disableAutoTracking()
+enableAutoTracking({ hosts: { 'api.groq.com': 'openai-compatible' } })
 
 function defaultForm(endpoint) {
   return {
-    model: endpoint.defaultModel ?? DEFAULT_MODEL,
+    model: endpoint.defaultModel,
     prompt: '',
   }
 }
 
 export default function App() {
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem(STORAGE_KEY) ?? '')
+  const [keys, setKeys] = useState(() =>
+    Object.fromEntries(
+      Object.entries(PROVIDERS).map(([id, p]) => [id, localStorage.getItem(p.storageKey) ?? '']),
+    ),
+  )
   const [selectedId, setSelectedId] = useState(ENDPOINTS[0].id)
   const endpoint = ENDPOINTS.find((ep) => ep.id === selectedId)
 
@@ -36,15 +45,16 @@ export default function App() {
 
   const form = forms[selectedId]
   const response = results[selectedId]
+  const apiKey = keys[endpoint.provider]
 
-  const saveKey = (key) => {
-    setApiKey(key)
-    localStorage.setItem(STORAGE_KEY, key)
+  const saveKey = (provider, key) => {
+    setKeys((k) => ({ ...k, [provider]: key }))
+    localStorage.setItem(PROVIDERS[provider].storageKey, key)
   }
 
-  const clearKey = () => {
-    setApiKey('')
-    localStorage.removeItem(STORAGE_KEY)
+  const clearKey = (provider) => {
+    setKeys((k) => ({ ...k, [provider]: '' }))
+    localStorage.removeItem(PROVIDERS[provider].storageKey)
   }
 
   const updateForm = (next) => setForms((f) => ({ ...f, [selectedId]: next }))
@@ -59,7 +69,7 @@ export default function App() {
       if (endpoint.streaming) {
         let acc = ''
         res = await sendStreamingRequest(endpoint, form, apiKey, (chunk) => {
-          acc += extractText(chunk)
+          acc += extractText(endpoint, chunk)
           setStreamText(acc)
         })
       } else {
@@ -81,7 +91,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <ApiKeyBar apiKey={apiKey} onSave={saveKey} onClear={clearKey} />
+      <ApiKeyBar keys={keys} onSave={saveKey} onClear={clearKey} />
       <div className="layout">
         <Sidebar
           selectedId={selectedId}
@@ -100,6 +110,7 @@ export default function App() {
             apiKeySet={apiKey !== ''}
           />
           <ResponsePanel
+            endpoint={endpoint}
             response={response}
             streamText={endpoint.streaming ? streamText : ''}
             loading={loading}

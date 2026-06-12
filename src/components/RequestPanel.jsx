@@ -1,4 +1,4 @@
-import { buildRequest, MODELS, EMBED_MODELS } from '../lib/gemini'
+import { buildRequest, PROVIDERS } from '../lib/providers'
 
 export default function RequestPanel({ endpoint, form, onChange, onSend, loading, apiKeySet }) {
   const set = (key) => (e) => onChange({ ...form, [key]: e.target.value })
@@ -19,7 +19,7 @@ export default function RequestPanel({ endpoint, form, onChange, onSend, loading
         <label className="field">
           <span>Model</span>
           <select value={form.model} onChange={set('model')}>
-            {(endpoint.id === 'embedContent' ? EMBED_MODELS : MODELS).map((m) => (
+            {endpoint.models.map((m) => (
               <option key={m} value={m}>
                 {m}
               </option>
@@ -46,7 +46,11 @@ export default function RequestPanel({ endpoint, form, onChange, onSend, loading
         <button className="primary send" onClick={onSend} disabled={loading || !apiKeySet}>
           {loading ? 'Sending…' : 'Send Request'}
         </button>
-        {!apiKeySet && <span className="hint">Save an API key above to send requests.</span>}
+        {!apiKeySet && (
+          <span className="hint">
+            Save a {PROVIDERS[endpoint.provider].label} API key above to send requests.
+          </span>
+        )}
       </div>
     </section>
   )

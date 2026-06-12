@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { extractText } from '../lib/gemini'
+import { extractText } from '../lib/providers'
 
-export default function ResponsePanel({ response, streamText, loading }) {
+export default function ResponsePanel({ endpoint, response, streamText, loading }) {
   const [tab, setTab] = useState('text')
 
   if (!response && !streamText && !loading) {
@@ -12,7 +12,7 @@ export default function ResponsePanel({ response, streamText, loading }) {
     )
   }
 
-  const text = streamText || extractText(response?.data)
+  const text = streamText || extractText(endpoint, response?.data)
   const hasText = text.length > 0
   const activeTab = hasText ? tab : 'json'
 
